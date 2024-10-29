@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Btn from './Btn';
 import axios from 'axios';
 import InputField from './Inputfields';
+import DeleteModal from './DeleteModal';
+import EditModal from './EditModal';
+import Pagination from './Pagination';
 
 function Container() {
   const [tasks, setTasks] = useState([]);
@@ -13,6 +16,15 @@ function Container() {
   const [deleteTaskId, setDeleteTaskId] = useState(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [sortedTasks, setSortedTasks] = useState({ key: 'taskName', ascending: true });
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('')
+
+  const tasksPerPage = 10;
+  const totalPages = Math.ceil(tasks.length / tasksPerPage);
+
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) setPage(newPage);
+  };
 
   const handleOpenEditModal = (task) => {
     setEditTaskId(task.id);
@@ -73,12 +85,12 @@ function Container() {
         const res = await axios.post('http://localhost:4000/tasks', payload);
         setTasks([...tasks, res.data]);
         setTaskInput('');
+        setPage(1);
       } catch (error) {
         console.log(error);
       }
     }
   };
-
   const deleteTask = async () => {
     if (deleteTaskId) {
       try {
@@ -89,6 +101,10 @@ function Container() {
         console.error('Error deleting task:', error);
       }
     }
+  };
+  const inputHandler = (e) => {
+    var lowerCase = e.target.value.toLowerCase();
+    setSearch(lowerCase);
   };
 
   useEffect(() => {
@@ -115,6 +131,15 @@ function Container() {
     setSortedTasks({ key, ascending: direction });
   };
 
+  const filteredTasks = tasks.filter((task) =>
+    task.taskName.toLowerCase().includes(search)
+  );
+
+  const paginatedTasks = filteredTasks.slice(
+    (page - 1) * tasksPerPage,
+    page * tasksPerPage
+  );
+
   return (
     <>
       <div className="flex justify-center items-start">
@@ -131,6 +156,12 @@ function Container() {
             </div>
           </form>
           <Btn funCtion={addTask} buttonName={"Add"} />
+
+          <InputField
+            placeholder="Search"
+            type="text"
+            onChange={inputHandler}
+          />
         </div>
       </div>
 
@@ -139,7 +170,7 @@ function Container() {
           <thead className="text-center">
             <tr className="bg-gray-100">
               <th className="py-2 px-4 border-gray-400 border-x-2 w-24 text-sm" onClick={() => applySorting('id')}>
-                Sr. No. {sortedTasks.key === 'id' && (sortedTasks.ascending ? '▲' : '▼')}
+                Sr. No.
               </th>
               <th className="py-2 px-4 border-gray-400 border-x-2 max-w-xs" onClick={() => applySorting('taskName')}>
                 Task Name {sortedTasks.key === 'taskName' && (sortedTasks.ascending ? '▲' : '▼')}
@@ -151,82 +182,45 @@ function Container() {
             </tr>
           </thead>
           <tbody>
-            {tasks.map((task, index) => (
+            {paginatedTasks.map((task, index) => (
               <tr className="border-black border-x-2" key={task.id}>
-                <td className="text-center border-x-2">{index + 1}</td>
+                <td className="text-center border-x-2">{index + 1 + (page - 1) * tasksPerPage}</td>
                 <td className="border-r-2 max-w-xs break-words">{task.taskName}</td>
                 <td className={`text-center border-r-2 ${task.status ? 'text-green-500' : 'text-red-500'}`}>
                   {task.status ? 'Completed' : 'Incomplete'}
                 </td>
-                <td className="text-center border-r-2">
-                  <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" onClick={() => handleOpenEditModal(task)}>
-                    Edit
-                  </button>
-                  <button className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 ml-3" onClick={() => handleOpenDeleteModal(task.id)}>
-                    Delete
-                  </button>
+                <td className="text-center items-center justify-center flex border-r-2">
+                  <svg onClick={() => handleOpenEditModal(task)} className="h-4 w-4 m-2 cursor-pointer text-red-500" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                  <svg onClick={() => handleOpenDeleteModal(task.id)} className="cursor-pointer h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">  <polyline points="3 6 5 6 21 6" />  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />  <line x1="10" y1="11" x2="10" y2="17" />  <line x1="14" y1="11" x2="14" y2="17" /></svg>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
       {openEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-            <h2 className="text-lg font-semibold mb-4">Edit Task</h2>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Task Name:</label>
-              <input
-                type="text"
-                value={taskEditInput}
-                onChange={handleEditInputChange}
-                placeholder="Edit the Task"
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div className="mt-4 flex items-center">
-              <input
-                type="checkbox"
-                checked={taskStatusInput}
-                onChange={handleStatusChange}
-                className="mr-2"
-              />
-              <label className="text-sm font-medium text-gray-700">Completed?</label>
-            </div>
-            <div className="flex justify-end mt-4">
-              <button onClick={handleClose} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 mr-2">
-                Cancel
-              </button>
-              <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditModal
+          taskName={taskEditInput}
+          onTaskNameChange={handleEditInputChange}
+          taskStatus={taskStatusInput}
+          onStatusChange={handleStatusChange}
+          onClose={handleClose}
+          onSave={handleSave}
+        />
       )}
 
       {openDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-            <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
-            <div className="mb-4">
-              <h2>Are you sure?</h2>
-            </div>
-            <div className="flex justify-end mt-4">
-              <button onClick={handleClose} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 mr-2">
-                Cancel
-              </button>
-              <button onClick={deleteTask} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteModal onClose={handleClose} onDelete={deleteTask} />
       )}
+
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </>
   );
 }
-
 export default Container;
+
+

@@ -5,12 +5,16 @@ import InputField from './Inputfields';
 import DeleteModal from './DeleteModal';
 import EditModal from './EditModal';
 import Pagination from './Pagination';
+import { Field, Form, Formik } from 'formik';
+import * as Yup from 'yup';
+
+
 
 function Container() {
   const [tasks, setTasks] = useState([]);
-  const [taskInput, setTaskInput] = useState('');
+  // const [taskInput, setTaskInput] = useState('');
   const [editTaskId, setEditTaskId] = useState(null);
-  const [taskEditInput, setTaskEditInput] = useState('');
+  const [taskEditInput, setTaskEditInput] = useState(null);
   const [taskStatusInput, setTaskStatusInput] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [deleteTaskId, setDeleteTaskId] = useState(null);
@@ -25,6 +29,11 @@ function Container() {
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= totalPages) setPage(newPage);
   };
+
+  const validationSchema = Yup.object().shape({
+    task: Yup.string()
+      .required('Required'),
+  });
 
   const handleOpenEditModal = (task) => {
     setEditTaskId(task.id);
@@ -45,10 +54,6 @@ function Container() {
     setTaskStatusInput(false);
     setOpenDeleteModal(false);
     setDeleteTaskId(null);
-  };
-
-  const handleInputChange = (e) => {
-    setTaskInput(e.target.value);
   };
 
   const handleEditInputChange = (e) => {
@@ -74,22 +79,21 @@ function Container() {
     }
   };
 
-  const addTask = async () => {
-    if (taskInput.trim()) {
-      try {
-        const payload = {
-          id: tasks.length + 1,
-          taskName: taskInput.trim(),
-          status: false,
-        };
-        const res = await axios.post('http://localhost:4000/tasks', payload);
-        setTasks([...tasks, res.data]);
-        setTaskInput('');
-        setPage(1);
-      } catch (error) {
-        console.log(error);
-      }
+  const addTask = async (values) => {
+    try {
+      const payload = {
+        id: tasks.length + 1,
+        taskName: values.task,
+        status: false,
+      };
+      const res = await axios.post('http://localhost:4000/tasks', payload);
+      setTasks([...tasks, res.data]);
+      // setTaskInput('');
+      setPage(1);
+    } catch (error) {
+      console.log(error);
     }
+
   };
   const deleteTask = async () => {
     if (deleteTaskId) {
@@ -139,29 +143,48 @@ function Container() {
     (page - 1) * tasksPerPage,
     page * tasksPerPage
   );
-
   return (
     <>
       <div className="flex justify-center items-start">
         <div className="bg-customColor px-12 py-4 shadow-2xl rounded-2xl border-4 max-w-[1100px]">
-          <form>
-            <div className="mt-2 text-xl">
-              <InputField
-                fieldName="Enter Task:"
-                onChange={handleInputChange}
-                value={taskInput}
-                type="text"
-                placeholder="Specify the Task"
-              />
-            </div>
-          </form>
-          <Btn funCtion={addTask} buttonName={"Add"} />
-
-          <InputField
-            placeholder="Search"
-            type="text"
-            onChange={inputHandler}
-          />
+          <Formik
+            initialValues={{ task: '' }}
+            validationSchema={validationSchema}
+            onSubmit={(values, { resetForm }) => {
+              addTask(values);
+              resetForm();
+            }}
+          >
+            {({ handleSubmit, handleChange, values, errors }) => (
+              <Form onSubmit={handleSubmit}>
+                <div className="mt-2 text-xl">
+                  {/* <InputField
+                    name="task"
+                    fieldName="Enter Task:"
+                   onChange={handleChange}
+                    value={values.task}
+                    type="text"
+                    placeholder="Specify the Task"
+                  /> */}
+                  <label className='text-2xl'>Enter Task</label>
+                  <Field
+                  className="mt-2 flex border-2 border-x-gray-400 rounded-2xl items-center p-2 h-10 w-60"
+                   name="task"
+                   placeholder="Specify the task"
+                   onChange={handleChange} />
+                  {errors.task && <span className="text-red-600 text-sm">{errors.task}</span>}
+                </div>
+                <div>
+                  <Btn type="submit" funCtion={addTask} buttonName={"Add"} />
+                  <InputField
+                    placeholder="Search"
+                    type="text"
+                    onChange={inputHandler}
+                  />
+                </div>
+              </Form>
+            )}
+          </Formik>
         </div>
       </div>
 
@@ -183,9 +206,9 @@ function Container() {
           </thead>
           <tbody>
             {paginatedTasks.map((task, index) => (
-              <tr className="border-black border-x-2" key={task.id}>
+              <tr className="border-x-2" key={task.id}>
                 <td className="text-center border-x-2">{index + 1 + (page - 1) * tasksPerPage}</td>
-                <td className="border-r-2 max-w-xs break-words">{task.taskName}</td>
+                <td className="border-r-2 max-w-28 break-words">{task.taskName}</td>
                 <td className={`text-center border-r-2 ${task.status ? 'text-green-500' : 'text-red-500'}`}>
                   {task.status ? 'Completed' : 'Incomplete'}
                 </td>
@@ -222,5 +245,4 @@ function Container() {
   );
 }
 export default Container;
-
 

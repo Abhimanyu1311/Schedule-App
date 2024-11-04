@@ -168,10 +168,10 @@ function Container() {
                   /> */}
                   <label className='text-2xl'>Enter Task</label>
                   <Field
-                  className="mt-2 flex border-2 border-x-gray-400 rounded-2xl items-center p-2 h-10 w-60"
-                   name="task"
-                   placeholder="Specify the task"
-                   onChange={handleChange} />
+                    className="mt-2 flex border-2 border-x-gray-400 rounded-2xl items-center p-2 h-10 w-60"
+                    name="task"
+                    placeholder="Specify the task"
+                    onChange={handleChange} />
                   {errors.task && <span className="text-red-600 text-sm">{errors.task}</span>}
                 </div>
                 <div>

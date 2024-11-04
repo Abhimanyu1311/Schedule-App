@@ -7,6 +7,7 @@ import EditModal from './EditModal';
 import Pagination from './Pagination';
 import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
+import { debounce } from 'lodash';
 
 
 
@@ -106,10 +107,10 @@ function Container() {
       }
     }
   };
-  const inputHandler = (e) => {
+  const inputHandler = debounce((e) => {
     var lowerCase = e.target.value.toLowerCase();
     setSearch(lowerCase);
-  };
+  },500);
 
   useEffect(() => {
     const fetchTasks = async () => {

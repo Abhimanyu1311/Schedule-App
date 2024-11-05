@@ -110,7 +110,7 @@ function Container() {
   const inputHandler = debounce((e) => {
     var lowerCase = e.target.value.toLowerCase();
     setSearch(lowerCase);
-  },500);
+  }, 500);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -193,14 +193,20 @@ function Container() {
         <table className="border-2 shadow-xl rounded-3xl min-w-full m-2">
           <thead className="text-center">
             <tr className="bg-gray-100">
-              <th className="py-2 px-4 border-gray-400 border-x-2 w-24 text-sm" onClick={() => applySorting('id')}>
+              <th className="py-2 px-4 border-gray-400 border-x-2 w-24 text-sm">
                 Sr. No.
               </th>
-              <th className="py-2 px-4 border-gray-400 border-x-2 max-w-xs" onClick={() => applySorting('taskName')}>
-                Task Name {sortedTasks.key === 'taskName' && (sortedTasks.ascending ? '▲' : '▼')}
+              <th className="py-2 px-4 border-gray-400 border-x-2 max-w-xs text-left" onClick={() => applySorting('taskName')}>
+                Task Name <span className='cursor-pointer px-1'>
+                  {sortedTasks.ascending ? '▲' : '▼'}
+                </span>
               </th>
               <th className="py-2 px-4 border-gray-400 border-x-2" onClick={() => applySorting('status')}>
-                Status {sortedTasks.key === 'status' && (sortedTasks.ascending ? '▲' : '▼')}
+                Status
+                <span className='px-1 cursor-pointer'> 
+
+                  {sortedTasks.ascending ? '▲' : '▼'}
+                </span>
               </th>
               <th className="py-2 px-4 border-gray-400 border-x-2">Action</th>
             </tr>
@@ -209,7 +215,7 @@ function Container() {
             {paginatedTasks.map((task, index) => (
               <tr className="border-x-2" key={task.id}>
                 <td className="text-center border-x-2">{index + 1 + (page - 1) * tasksPerPage}</td>
-                <td className="border-r-2 max-w-28 break-words">{task.taskName}</td>
+                <td className="px-4 border-r-2 max-w-28 break-words">{task.taskName}</td>
                 <td className={`text-center border-r-2 ${task.status ? 'text-green-500' : 'text-red-500'}`}>
                   {task.status ? 'Completed' : 'Incomplete'}
                 </td>
